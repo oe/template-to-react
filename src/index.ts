@@ -7,6 +7,8 @@ const attributeMap: Record<string, string> = {
   'for': 'htmlFor',
 };
 
+const TAG_PROP = `data-${crypto.randomUUID()}`;
+const TEMP_TAG = `tag-${crypto.randomUUID()}`;
 /**
  * 将 HTML 属性转换为 React 属性
  * @param attributes HTML 属性对象
@@ -62,8 +64,9 @@ function convertNode(node: Node): string {
 
   if (node instanceof Element) {
     let tag = node.name;
-    if (tag === 'temp-tag') {
-      tag = `{props.${node.attribs['tag']}}`;
+    if (tag === TEMP_TAG) {
+      tag = `{props.${node.attribs[TAG_PROP]}}`;
+      delete node.attribs[TAG_PROP];
     }
 
     const attributes = convertAttributes(node.attribs);
@@ -81,7 +84,7 @@ function convertNode(node: Node): string {
  * @returns 替换后的模板字符串
  */
 function replaceTagPlaceholders(template: string): string {
-  return template.replace(/<\{(\w+)\}/g, '<temp-tag tag="$1"').replace(/<\/\{(\w+)\}>/g, '</temp-tag>');
+  return template.replace(/<\{(\w+)\}/g, `<${TEMP_TAG} ${TAG_PROP}="$1"`).replace(/<\/\{(\w+)\}>/g, `</${TEMP_TAG}>`);
 }
 
 /**
@@ -98,6 +101,9 @@ function templateToReactComponent(template: string): string {
 }
 
 // 示例使用
-const template = `Hello, {user}! You Got <{p1} class="{className}" data-id="{id}">{score}</{p1}>! <span class="hilight">Great!</span>`;
+const template = `Hello, {user}! You Got 
+<{p1} class="{className}" data-id="{id} haha">{score}</{p1}>!
+<{w31} class="{className}" data-id="{id}">{score}</{w31}>!
+<span class="hilight">Great!</span>`;
 const reactComponentString = templateToReactComponent(template);
 console.log(reactComponentString);
