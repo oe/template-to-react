@@ -1,4 +1,4 @@
-import { parseDocument } from 'htmlparser2';
+import { parseDocument, Parser } from 'htmlparser2';
 import { Element, Text, Node } from 'domhandler';
 
 /**
@@ -117,7 +117,7 @@ function replaceTagPlaceholders(template: string): string {
  * @param template template string
  * @returns React component string
  */
-function templateToReactComponent(template: string): string {
+export function templateToReactComponent(template: string): string {
   const transformedTemplate = replaceTagPlaceholders(template);
   const document = parseDocument(transformedTemplate);
   const componentBody = document.children.map(convertNode).join('');
@@ -130,8 +130,8 @@ function templateToReactComponent(template: string): string {
 
 // 示例使用
 const template = `<span>Hello, {user}! You Got 
-<{p1} class="{className}" data-id="{id} haha">{score}</{p1}>!
+<{p1} class="{className}" data-id="{id} haha" data-tag="</{p3}>">{score}</{p1}>!
 <{w31} class="{className}" data-id="{id}">{score}</{w31}>!
-<span class="hilight">Great!</span></span>`;
+<span class="hilight" data-id="{pp} sss">Great!</span></span>`;
 const reactComponentString = templateToReactComponent(template);
 console.log(reactComponentString);
