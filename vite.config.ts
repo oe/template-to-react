@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import dts from 'vite-plugin-dts'
 
 export default defineConfig({
   build: {
@@ -7,5 +8,6 @@ export default defineConfig({
       name: 'template2react',
       fileName: 'index'
     }
-  }
+  },
+  plugins: [dts({ rollupTypes: true })]
 })

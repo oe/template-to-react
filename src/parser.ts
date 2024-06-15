@@ -18,7 +18,7 @@ const htmlSyntax = `
         if (startTagName.name !== endTagName.name) {
           throw new Error('Tag names do not match: ' + startTagName.name + ' vs. ' + endTagName.name);
         }
-        return { type: 'tag', name: startTagName.name, attributes, children }; 
+        return { type: 'tag', name: startTagName, attributes, children }; 
       }
 
   selfClosingTag
@@ -26,7 +26,7 @@ const htmlSyntax = `
       { return { type: 'selfClosingTag', name, attributes }; }
 
   tagName
-    = identifier:tagIdentifier { return {type: 'tag', name: identifier}; }
+    = identifier:tagIdentifier { return { type: 'tag', name: identifier }; }
     / placeholder:placeholder { return placeholder; }
 
   identifier
@@ -55,8 +55,8 @@ const htmlSyntax = `
       { return { name, value }; }
 
   quotedValue
-    = "\\"" value:[^"]* "\\""
-      { return value.join(''); }
+    = "\\"" value:[^"]* "\\"" { return value.join(''); }
+    / "\\'" value:[^']* "\\'" { return value.join(''); }
 
   text
     = text:[^<]+ { return text.join(''); }
@@ -66,22 +66,92 @@ const htmlSyntax = `
 
   comment
     = "<!--" comment:(!"-->" .)* "-->"
-      { return { type: 'comment', comment: comment.join('') }; }
+      { return { type: 'comment', comment: comment.flat().join('') }; }
 `;
 
-// Load the PEG.js grammar from the generated file
-// const grammar = fs.readFileSync('./grammar.js', 'utf8');
+/**
+ * html attribute
+ */
+export interface IAttribute {
+  name: string;
+  value: string;
+}
 
-// Create a PEG.js parser
-export const parser = peg.generate(htmlSyntax);
-// Parse some input
-const input = `
-<{p13} class="demo" data-id="</{p1-23}>">xxxx</{p13}>
-<div class="test">Hello, world!</div>
-"Hello, world!" {p222}
-<{p24} />
-`;
-const output = parser.parse(input);
+/**
+ * html comment node
+ */
+export interface IComment {
+  type: 'comment';
+  comment: string;
+}
 
-console.log('parser:');
-console.log(JSON.stringify(output, null, 2));
+/**
+ * html text node
+ */
+
+export interface IText {
+  type: 'text';
+  value: string;
+}
+
+/**
+ * html element node
+ */
+export interface IElement {
+  type: 'tag';
+  name: {
+    type: 'tag' | 'placeholder';
+    name: string 
+  }
+  attributes: IAttribute[];
+  children: INode[];
+}
+
+/**
+ * html self closing tag node
+ */
+export interface ISelfClosingTag {
+  type: 'selfClosingTag';
+  name: {
+    type: 'tag' | 'placeholder';
+    name: string 
+  }
+  attributes: IAttribute[];
+}
+
+/**
+ * html node
+ */
+export type INode = IElement | IText | IComment | ISelfClosingTag
+
+
+/**
+ * html custom parser support placeholder as tag name
+ */
+export const parser = peg.generate(htmlSyntax) as {
+  parse: (input: string) => INode[];
+};
+
+/**
+ * build html string from node array
+ * @param nodes node array
+ * @returns string
+ */
+export function buildHtmlFrom(nodes: INode[]): string {
+  return nodes.map(node => {
+    switch (node.type) {
+      case 'comment':
+        return
+      case 'text':
+        return node.value;
+      case 'tag':
+        return `<${node.name.name} ${node.attributes.map(({name, value}) => `${name}="${value}"`).join(' ')}>${buildHtmlFrom(node.children)}</${node.name.name}>`;
+      case 'selfClosingTag':
+        return `<${node.name.name} ${node.attributes.map(({name, value}) => `${name}="${value}"`).join(' ')}/>`;
+    }
+  }).filter(Boolean).join('');
+}
+
+
+// const content = parser.parse('<{p1}>xxx</{p1}>')
+// console.log(JSON.stringify(content))

@@ -1,5 +1,6 @@
-import { parseDocument, Parser } from 'htmlparser2';
-import { Element, Text, Node } from 'domhandler';
+import { parser, type INode, type IAttribute } from './parser';
+
+export * from './parser';
 
 /**
  * jsx special attributes mapping
@@ -8,20 +9,17 @@ const jsxAttributeMap: Record<string, string> = {
   'class': 'className',
   'for': 'htmlFor',
 };
-// random tag and prop to replace the placeholder tag, to avoid conflict with the original tag
-const TAG_PROP = `data-${crypto.randomUUID()}`;
-const TEMP_TAG = `tag-${crypto.randomUUID()}`;
 
 /**
  * convert HTML attributes to React attributes
  * @param attributes attributes object
  * @returns React attributes object
  */
-function convertAttributes(attributes: Record<string, string>): Record<string, string> {
+function convertAttributes(attributes: IAttribute[]): Record<string, string> {
   const convertedAttributes: Record<string, string> = {};
 
-  for (const [key, value] of Object.entries(attributes)) {
-    let newKey = jsxAttributeMap[key] || key;
+  attributes.forEach(({ name, value }) => {
+    let newKey = jsxAttributeMap[name] || name;
     let newValue = value;
     if (/{\w+}/.test(value)) {
       const parts = value.split(/({\w+})/g);
@@ -40,7 +38,7 @@ function convertAttributes(attributes: Record<string, string>): Record<string, s
     }
 
     convertedAttributes[newKey] = newValue;
-  }
+  })
 
   return convertedAttributes;
 }
@@ -82,56 +80,49 @@ function createElementString(tag: string, attributes: Record<string, string>, ch
  * @param node DOM node
  * @returns React component string
  */
-function convertNode(node: Node): string {
-  if (node instanceof Text) {
-    return node.data.replace(/{(\w+)}/g, (_, $1) => `{${standardizeProp($1)}}`);
+function convertNode(node: INode): string {
+  if (node.type === 'comment') return ''
+  if (node.type === 'text') {
+    return node.value.replace(/{(\w+)}/g, (_, $1) => `{${standardizeProp($1)}}`)
   }
-
-  if (node instanceof Element) {
-    let tag = node.name;
-    if (tag === TEMP_TAG) {
-      tag = `{${standardizeProp(node.attribs[TAG_PROP])}}`;
-      delete node.attribs[TAG_PROP];
+  if (node.type === 'selfClosingTag' || node.type === 'tag') {
+    let tag = node.name.name;
+    if (node.name.type === 'placeholder') {
+      tag = `{${standardizeProp(node.name.name)}}`;
     }
 
-    const attributes = convertAttributes(node.attribs);
-    const children = node.children.map(convertNode).join('');
-
+    const attributes = convertAttributes(node.attributes);
+    let children = '';
+    if (node.type === 'tag') {
+      children = node.children.map(convertNode).join('');
+    }
     return createElementString(tag, attributes, children);
   }
 
   return '';
 }
 
-/**
- * replace tag placeholders with temporary tag and prop
- * @param template template string
- * @returns replaced template string
- */
-function replaceTagPlaceholders(template: string): string {
-  return template.replace(/<\{(\w+)\}/g, `<${TEMP_TAG} ${TAG_PROP}="$1"`).replace(/<\/\{(\w+)\}>/g, `</${TEMP_TAG}>`);
-}
 
 /**
  * convert template string to React component string
  * @param template template string
  * @returns React component string
  */
-export function templateToReactComponent(template: string): string {
-  const transformedTemplate = replaceTagPlaceholders(template);
-  const document = parseDocument(transformedTemplate);
-  const componentBody = document.children.map(convertNode).join('');
+export function templateToReactComponent(template: string, fnName = 'TplComponent'): string {
+  const ast = parser.parse(template.trim());
+  const componentBody = ast.map(convertNode).filter(Boolean)
 
   // if the template has only one root node, no need for extra <> </>
-  const needsFragmentWrapper = document.children.length > 1;
+  const needsFragmentWrapper = componentBody.length > 1;
+  const componentString = componentBody.join('');
 
-  return `function R(props) { return ${needsFragmentWrapper ? `<>${componentBody}</>` : componentBody}; }`;
+  return `function ${fnName}(props) { return ${needsFragmentWrapper ? `<>${componentString}</>` : componentString}; }`;
 }
 
-// 示例使用
-const template = `<span>Hello, {user}! You Got 
-<{p1} class="{className}" data-id="{id} haha" data-tag="</{p3}>">{score}</{p1}>!
-<{w31} class="{className}" data-id="{id}">{score}</{w31}>!
-<span class="hilight" data-id="{pp} sss">Great!</span></span>`;
-const reactComponentString = templateToReactComponent(template);
-console.log(reactComponentString);
+// sample
+// const template = `ww<span>Hello, {user}! You Got 
+// <{p1} class="{className}" data-id="{id} haha" data-tag="</{p3}>">{score}</{p1}>!
+// <{w31} class="{className}" data-id="{id}">{score}</{w31}>!
+// <span class="hilight" data-id="{pp} sss">Great!</span></span>`;
+// const reactComponentString = templateToReactComponent(template);
+// console.log(reactComponentString);
