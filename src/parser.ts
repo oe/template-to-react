@@ -26,11 +26,20 @@ const htmlSyntax = `
       { return { type: 'selfClosingTag', name, attributes }; }
 
   tagName
-    = identifier:dashIdentifier { return {type: 'tag', name: identifier}; }
+    = identifier:tagIdentifier { return {type: 'tag', name: identifier}; }
     / placeholder:placeholder { return placeholder; }
 
   identifier
     = start:[a-zA-Z] rest:[a-zA-Z0-9_]* { return start + rest.join(''); }
+  
+  tagIdentifier
+    = start:[a-zA-Z] rest:[a-zA-Z0-9_-]*
+      {
+        if (start.toLowerCase() !== start || rest.some(c => c.toLowerCase() !== c)) {
+          throw new Error('Tag name ' + (start + rest.join('')) + ' must be lowercase');
+        }
+        return start + rest.join('');
+      }
   
   dashIdentifier
     = start:[a-zA-Z] rest:[a-zA-Z0-9_-]* { return start + rest.join(''); }
