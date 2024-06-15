@@ -147,7 +147,7 @@ export interface ITemplateToReactOptions {
  * @returns React component string
  */
 export function templateToReact(template: string, options?: ITemplateToReactOptions): string {
-  const { componentName = 'TemplateComponent', pretty = false, jsx = false } = options || {};
+  const { componentName = 'TemplateComponent' } = options || {};
   const ast = parser.parse(template.trim());
   const componentBody = ast.map(convertNode).filter(Boolean)
 
