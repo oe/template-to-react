@@ -61,7 +61,11 @@ function convertNode(node: Node): string {
   }
 
   if (node instanceof Element) {
-    const tag = node.name;
+    let tag = node.name;
+    if (tag === 'temp-tag') {
+      tag = `{props.${node.attribs['tag']}}`;
+    }
+
     const attributes = convertAttributes(node.attribs);
     const children = node.children.map(convertNode).join('');
 
@@ -72,12 +76,22 @@ function convertNode(node: Node): string {
 }
 
 /**
+ * 替换模板中的占位符标签名
+ * @param template 模板字符串
+ * @returns 替换后的模板字符串
+ */
+function replaceTagPlaceholders(template: string): string {
+  return template.replace(/<\{(\w+)\}/g, '<temp-tag tag="$1"').replace(/<\/\{(\w+)\}>/g, '</temp-tag>');
+}
+
+/**
  * 将模板字符串转换为 React 组件字符串
  * @param template 模板字符串
  * @returns React 组件字符串
  */
 function templateToReactComponent(template: string): string {
-  const document = parseDocument(template);
+  const transformedTemplate = replaceTagPlaceholders(template);
+  const document = parseDocument(transformedTemplate);
   const componentBody = document.children.map(convertNode).join('');
 
   return `function R(props) { return <>${componentBody}</>; }`;
