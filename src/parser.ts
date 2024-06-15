@@ -13,8 +13,13 @@ const htmlSyntax = `
     / text:text { return { type: 'text', value: text }; }
 
   tag
-    = "<" name:tagName attributes:attributes space* ">" children:document "</" tagName ">" 
-      { return { type: 'tag', name, attributes, children }; }
+    = "<" startTagName:tagName attributes:attributes space* ">" children:document "</" endTagName:tagName ">" 
+      { 
+        if (startTagName.name !== endTagName.name) {
+          throw new Error('Tag names do not match: ' + startTagName.name + ' vs. ' + endTagName.name);
+        }
+        return { type: 'tag', name: startTagName.name, attributes, children }; 
+      }
 
   selfClosingTag
     = "<" name:tagName attributes:attributes space* "/>" 
@@ -62,9 +67,10 @@ const htmlSyntax = `
 export const parser = peg.generate(htmlSyntax);
 // Parse some input
 const input = `
-<{p13} class="demo" data-id="</{p1-23}>">xxxx</{p1}>
+<{p13} class="demo" data-id="</{p1-23}>">xxxx</{p13}>
 <div class="test">Hello, world!</div>
 "Hello, world!" {p222}
+<{p24} />
 `;
 const output = parser.parse(input);
 
