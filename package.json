@@ -1,5 +1,16 @@
 {
-  "name": "string-template-to-react",
+  "name": "template-to-react",
+  "description": "create react component from html string template",
+  "author": {
+    "name": "Saiya"
+  },
+  "keywords": [
+    "react",
+    "template",
+    "html",
+    "string",
+    "compiler"
+  ],
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.umd.cjs",

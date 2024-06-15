@@ -102,13 +102,52 @@ function convertNode(node: INode): string {
   return '';
 }
 
+/**
+ * options for templateToReact
+ */
+export interface ITemplateToReactOptions {
+  /**
+   * component name
+   * @default 'TemplateComponent'
+   */
+  componentName?: string;
+  /**
+   * pretty print
+   * @default false, true for 2 spaces, number for custom spaces
+   */
+  pretty?: boolean | number;
+  /**
+   * whether convert to jsx function call
+   * @default false, true for React, object for custom jsx function
+   */
+  jsx?: boolean | {
+    /**
+     * Fragment component
+     * use React.Fragment for default
+     * @default false
+     */
+    fragment: Function;
+    /**
+     * function to create React element
+     * use React.createElement for default
+     * @default false
+     */
+    jsx: Function;
+    /**
+     * function to create React element root
+     * use React.createElement for default
+     */
+    jsxs: Function;
+  }
+}
 
 /**
  * convert template string to React component string
  * @param template template string
  * @returns React component string
  */
-export function templateToReactComponent(template: string, fnName = 'TplComponent'): string {
+export function templateToReact(template: string, options?: ITemplateToReactOptions): string {
+  const { componentName = 'TemplateComponent', pretty = false, jsx = false } = options || {};
   const ast = parser.parse(template.trim());
   const componentBody = ast.map(convertNode).filter(Boolean)
 
@@ -116,7 +155,7 @@ export function templateToReactComponent(template: string, fnName = 'TplComponen
   const needsFragmentWrapper = componentBody.length > 1;
   const componentString = componentBody.join('');
 
-  return `function ${fnName}(props) { return ${needsFragmentWrapper ? `<>${componentString}</>` : componentString}; }`;
+  return `function ${componentName}(props) { return ${needsFragmentWrapper ? `<>${componentString}</>` : componentString}; }`;
 }
 
 // sample
