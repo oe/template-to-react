@@ -1,15 +1,22 @@
 {
-  "name": "create-fn-hook",
-  "private": true,
-  "version": "0.0.0",
+  "name": "string-template-to-react",
+  "version": "0.0.1",
   "type": "module",
+  "main": "dist/index.umd.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "tsx": "^4.15.5",
     "typescript": "^5.2.2",
     "vite": "^5.2.11"
+  },
+  "dependencies": {
+    "domhandler": "^5.0.3",
+    "htmlparser2": "^9.1.0"
   }
 }
