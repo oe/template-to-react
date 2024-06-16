@@ -1,4 +1,4 @@
-<h1 align="Template to React">Composie</h1>
+<h1 align="center">Template to React</h1>
 <div align="center">
   <a href="https://github.com/oe/template-to-react/actions/workflows/build.yml">
     <img src="https://github.com/oe/template-to-react/actions/workflows/build.yml/badge.svg" alt="Github Workflow">

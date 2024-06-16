@@ -1,6 +1,6 @@
 {
   "name": "template-to-react",
-  "description": "create react component from html string template",
+  "description": "compile html string template to react component",
   "author": {
     "name": "Saiya"
   },
@@ -9,7 +9,9 @@
     "template",
     "html",
     "string",
-    "compiler"
+    "transpiler",
+    "compiler",
+    "converter"
   ],
   "repository": {
     "type": "git",
