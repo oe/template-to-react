@@ -1,5 +1,5 @@
 import { parser, type INode, type IAttribute } from './parser';
-import { getIndent, FRG_NAME, getIndentContent, standardizeProp } from './common';
+import { getIndent, FRG_NAME, getIndentContent, standardizeProp, hasRootNode } from './common';
 import { buildHtmlFrom } from './build-html';
 import { buildJsxFrom, type IJsxOptions } from './build-jsx'
 export * from './parser';
@@ -19,7 +19,6 @@ const jsxAttributeMap: Record<string, string> = {
 function convertAttributes(attributes: IAttribute[]): IAttribute[] {
   return attributes.map(({ name, value }) => {
     let newKey = jsxAttributeMap[name] || name;
-    // let newValue = convertTextToExpression(value, { wrapExp: true, wrapStr: true, prefixProp: true });
     return { name: newKey, value };
   })
 }
@@ -50,9 +49,7 @@ function convertNode(node: INode, reserverWhitespace?: boolean): INode | undefin
     }
     return node
   }
-  return
 }
-
 
 /**
  * options for templateToReact
@@ -92,7 +89,7 @@ export function compileTemplateToReact(template: string, options?: ITemplateToRe
 
   const convertedAst = ast.map(item => convertNode(item, reserverWhitespace || (isPretty && !!jsx))).filter(Boolean) as INode[];
   
-  const astTree: INode = convertedAst.length > 1
+  const astTree: INode = !hasRootNode(convertedAst)
     ? { type: 'tag', name: { type: 'placeholder', name: FRG_NAME }, attributes: [], children: convertedAst }
     : convertedAst[0];
 
@@ -105,10 +102,9 @@ export function compileTemplateToReact(template: string, options?: ITemplateToRe
     ? buildJsxFrom(astTree, jsx, isPretty, fnContentIndent, indentSize)
     : buildHtmlFrom(astTree, isPretty, fnContentIndent, indentSize);
 
-  console.log('initialIndent', initialIndent, indentSize)
   const space = isPretty ? ' ' : '';
   return `${leadingIndent}function ${componentName}(props)${space}{${injectedCode}${
     isPretty
     ? `\n${getIndent(fnContentIndent)}return ${code}\n${leadingIndent}}`
-    : `return ${code}}` }`;
+    : `return ${code}}`}`;
 }

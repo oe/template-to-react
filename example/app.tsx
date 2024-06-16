@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CompiledComponent } from './compiled-component'
+import { CompiledComponent, Another } from './compiled-component'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -19,6 +19,7 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      <Another user="Saiya" score={100} id="123" className="test" p1={'div'} p3="p3" w31="div" pp="pp" />
     </>
   )
 }

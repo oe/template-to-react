@@ -10,10 +10,9 @@ dsdsd
 <{w31} class="{className}" data-id="{id}">{score} good</{w31}>!
 <span class="hilight" data-id="{pp} sss">Great!</span></span></div>`;
 
-const compiledCode = compileTemplateToReact(template, { jsx: true })
+const compiledCode = compileTemplateToReact(template, { jsx: true, pretty: true })
 
-const evFn = eval(`(function fn() { console.log('xxx') })`)
-console.log('evFn:', evFn)
+console.log(compiledCode)
 
 const TemplateComponent = eval(`(${compiledCode})`);
 
@@ -30,9 +29,44 @@ function C1(props: any) {
       {props.children}
     </p>
   </div>
-
 }
 
 export function CompiledComponent() {
   return <TemplateComponent user="John" score={100} id="123" className="test" p1={C1} p3="p3" w31="div" pp="pp" />
+}
+
+// @ts-ignore
+window.aaa = Another
+
+export function Another(props: any) {
+  const C$c0 = props.p1;
+  const C$c1 = props.w31;
+  return (<div>
+    ww
+    <span>
+      Hello, {props.user}! You Got
+      dsdsd
+      <C$c0
+        className={props["3className"]}
+        data-id={props.id + " haha"}
+        data-tag={"</" + props.p3 + ">"}
+      >
+        {props.score}
+      </C$c0>
+      !
+      <C$c1
+        className={props.className}
+        data-id={props.id}
+      >
+        {props.score} good
+      </C$c1>
+      !
+      <span
+        className="hilight"
+        data-id={props.pp + " sss"}
+      >
+        Great!
+      </span>
+    </span>
+  </div>)
 }

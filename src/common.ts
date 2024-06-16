@@ -1,3 +1,4 @@
+import { type INode } from './parser';
 /**
  * fragment name, random string
  */
@@ -22,7 +23,7 @@ export function getIndentContent(pretty: boolean, indent: number, content: strin
 }
 
 export function isValidVariableName(name: string) {
-  return /^[$a-z][\da-z]*$/i.test(name);
+  return /^[$a-z][\da-z$]*$/i.test(name);
 }
 
 /**
@@ -47,7 +48,7 @@ export function standardizeProp(prop: string): string {
  * @param options.pretty add space between parts
  * @returns expression string
  */
-export function convertTextToExpression(text: string, options?: { wrapExp: boolean, wrapStr: boolean, prefixProp: boolean, pretty?: boolean}) {
+export function convertTextToExpression(text: string, options?: { wrapExp?: boolean, wrapStr?: boolean, prefixProp?: boolean, pretty?: boolean}) {
   if (/{[^\b}]+}/.test(text)) {
     const parts = text.split(/({[^\b}]+})/g);
     const convertedParts = parts.map(part => {
@@ -65,4 +66,14 @@ export function convertTextToExpression(text: string, options?: { wrapExp: boole
   } else {
     return options?.wrapStr ? JSON.stringify(text) : text;
   }
+}
+
+/**
+ * whether nodes array has its own root node
+ * @param nodes 
+ * @returns 
+ */
+export function hasRootNode(nodes: INode[]) {
+  if (nodes.length === 1) return nodes[0].type === 'tag' || nodes[0].type === 'selfClosingTag';
+  return false;
 }

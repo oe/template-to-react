@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 import react from '@vitejs/plugin-react'
@@ -21,6 +23,14 @@ export default defineConfig({
         },
       },
     },
+  },
+  test: {
+    // root: 'test',
+    include: ['test/**/*.test.ts'],
+    exclude: ['example/**'],
+    coverage: {
+      exclude: ['example/**', 'test/coverage/**'],
+    }
   },
   plugins: [react(), dts({ rollupTypes: true })]
 })

@@ -3,12 +3,13 @@ import { getIndent, isFragName, isValidVariableName, convertTextToExpression } f
 
 
 
-function getTextNode(node: IText, pretty: boolean) {
+function getTextNode(node: IText, pretty: boolean, isRoot: boolean) {
+  const content = convertTextToExpression(node.value,{
+    pretty, wrapExp: false, wrapStr: true, prefixProp: false
+  })
+  if (!isRoot) return content
   const space = pretty ? ' ' : ''
-  return `jsx(frg,${space}null,${space}${convertTextToExpression(
-    node.value,
-    { pretty, wrapExp: false, wrapStr: true, prefixProp: false})
-  })`
+  return `jsx(frg,${space}null,${space}${content})`
 }
 
 function getTagName(node: IElement | ISelfClosingElement) {
@@ -58,7 +59,7 @@ function buildJsxFromInner(node: INode, pretty: boolean, indent: number, indentS
     case 'comment':
       return '';
     case 'text':
-      return getTextNode(node, pretty)
+      return getTextNode(node, pretty, isRoot)
     case 'tag':
     case 'selfClosingTag':
       return getElement(node, pretty, indent, indentSize, isRoot);

@@ -30,7 +30,7 @@ const htmlSyntax = `
     / placeholder:placeholder { return placeholder; }
 
   identifier
-    = start:[a-zA-Z] rest:[a-zA-Z0-9_]* { return start + rest.join(''); }
+    = start:[$a-zA-Z] rest:[$a-zA-Z0-9_]* { return start + rest.join(''); }
   
   tagIdentifier
     = start:[a-zA-Z] rest:[a-zA-Z0-9_-]*
