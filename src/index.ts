@@ -87,7 +87,7 @@ export function compileTemplateToReact(template: string, options?: ITemplateToRe
   const ast = parser.parse(template.trim());
   const isPretty = !!pretty
 
-  const convertedAst = ast.map(item => convertNode(item, reserverWhitespace || (isPretty && !!jsx))).filter(Boolean) as INode[];
+  const convertedAst = ast.map(item => convertNode(item, !isPretty && reserverWhitespace)).filter(Boolean) as INode[];
   
   const astTree: INode = !hasRootNode(convertedAst)
     ? { type: 'tag', name: { type: 'placeholder', name: FRG_NAME }, attributes: [], children: convertedAst }

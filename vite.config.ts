@@ -25,6 +25,7 @@ export default defineConfig({
     },
   },
   test: {
+    watch: false,
     include: ['test/**/*.test.ts'],
     exclude: ['example/**'],
     coverage: {

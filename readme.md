@@ -1,6 +1,23 @@
-# Template to React
+<h1 align="Template to React">Composie</h1>
+<div align="center">
+  <a href="https://github.com/oe/template-to-react/actions/workflows/build.yml">
+    <img src="https://github.com/oe/template-to-react/actions/workflows/build.yml/badge.svg" alt="Github Workflow">
+  </a>
+  <a href="#readme">
+    <img src="https://badges.frapsoft.com/typescript/code/typescript.svg?v=101" alt="code with typescript" height="20">
+  </a>
+  <a href="#readme">
+    <img src="https://badge.fury.io/js/template-to-react.svg" alt="npm version" height="20">
+  </a>
+  <a href="https://www.npmjs.com/package/template-to-react">
+    <img src="https://img.shields.io/npm/dm/template-to-react.svg" alt="npm version" height="20">
+  </a>
+</div>
+Compiles HTML templates into React components, you may use it to convert HTML templates into React components at build time(or prebuild/predev).
 
-This project provides a utility function `compileTemplateToReact` that compiles HTML templates into React components.
+
+> [!CAUTION]
+> This package is still in development and may not be stable. Please report any issues you encounter.
 
 ## Installation
 
@@ -23,21 +40,69 @@ Then, you can use it to compile an HTML template into a React component:
 
 ```js
 const htmlTemplate = '<div class="{className}">Hello, {name}!</div>';
-const ReactComponent = compileTemplateToReact(htmlTemplate);
+const reactComponentCode = compileTemplateToReact(htmlTemplate);
+// code:  `function TemplateComponent(props){return <div className={props.className}>Hello, {props.name}!</div>}`
 ```
-
 
 In the above example, className and name are placeholders that will be replaced with the corresponding props when the React component is rendered.
 
 Here's another example with a more complex template:
 ```js
 const htmlTemplate = `
-  <div class="{className}">
+  <div class="{className}" data-title="Hello {user}">
     <h1>{title}</h1>
     <p>{description}</p>
+    <{c1}>{c2}</{c1}>
+    <{c3}/>
   </div>
 `;
-const ReactComponent = compileTemplateToReact(htmlTemplate);
+// compile the template to a React component
+const reactComponentCode = compileTemplateToReact(htmlTemplate, {
+  componentName: 'MyComponent',
+  pretty: true,
+});
+// will output:
+reactComponentCode = `
+function MyComponent (props) {
+  const C$c0 = props.c1;
+  const C$c0 = props.c3;
+  return (<div className={props.className} data-title={"Hello" + props.user}>
+    <h1>{props.title}</h1>
+    <p>{props.description}</p>
+    <C$c0>{props.c2}</C$c0>
+    <C$c1/>
+  </div>)
+}`;
+
+// compile the template to a React component with custom jsx options
+const reactComponentCodeJsx = compileTemplateToReact(htmlTemplate, {
+  componentName: 'MyComponent',
+  pretty: true,
+  jsx: true,
+});
+
+// will output:
+reactComponentCodeJsx = `
+function MyComponent(props) {
+  const frg = React.Fragment;
+  const jsx = React.createElement;
+  const jsxs = React.createElement;
+  return jsxs("div", {
+    className: props.className,
+    "data-title": "Hello " + props.user
+  }, [
+    jsx("h1", null, [
+      props.title
+    ]),
+    jsx("p", null, [
+      props.description
+    ]),
+    jsx(props.c1, null, [
+      props.c2
+    ]),
+    jsx(props.c3, null, [])
+  ])
+}`;
 ```
 
 In this example, className, title, and description are placeholders that will be replaced with the corresponding props when the React component is rendered.
@@ -102,4 +167,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 Please make sure to update tests as appropriate.
 
 ## License
-MIT
+[MIT](./LICENSE)

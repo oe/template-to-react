@@ -11,6 +11,10 @@
     "string",
     "compiler"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oe/template-to-react"
+  },
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.umd.cjs",
@@ -19,7 +23,8 @@
   "scripts": {
     "dev": "vite serve example",
     "build": "tsc && vite build",
-    "test": "vitest"
+    "test": "vitest --coverage --watch",
+    "prepublish": "yarn vitest && yarn build"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",
