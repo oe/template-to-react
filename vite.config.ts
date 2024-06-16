@@ -25,12 +25,11 @@ export default defineConfig({
     },
   },
   test: {
-    // root: 'test',
     include: ['test/**/*.test.ts'],
     exclude: ['example/**'],
     coverage: {
       exclude: ['example/**', 'test/coverage/**'],
-    }
+    },
   },
   plugins: [react(), dts({ rollupTypes: true })]
 })

@@ -1,33 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import { compileTemplateToReact } from '../src'
-import { buildJsxFrom } from '../src/build-jsx'
 
-describe('simple jsx', () => { 
-  it('simple text jsx', () => {
-    const template = `Hello world!`
+describe('placeholder jsx', () => { 
+  it('html jsx', () => {
+    const template = `<{p1}>Hello world!</p1>`
     const result = compileTemplateToReact(template, { jsx: true })
-    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs(frg,null,["Hello world!"])}`
+    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs(props.p1,null,["Hello world!"])}`
     expect(result).toBe(expected)
   })
-
-  it('simple text jsx with pretty', () => {
-    const template = `Hello world!`
-    const result = compileTemplateToReact(template, { jsx: true, pretty: true })
-    const expected = `function TemplateComponent(props) {
-  const frg = React.Fragment;
-  const jsx = React.createElement;
-  const jsxs = React.createElement;
-  return jsxs(frg, null, [
-    "Hello world!"
-  ])
-}`
-    expect(result).toBe(expected)
-  })
-
-  it('simple html jsx', () => {
-    const template = `<div>Hello world!</div>`
+  it('html jsx', () => {
+    const template = `<{p1}>Hello world!</p1><span>123</span>`
     const result = compileTemplateToReact(template, { jsx: true })
-    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",null,["Hello world!"])}`
+    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs(frg,null,[jsx(props.p1,null,["Hello world!"]),jsx("span",null,["123"])])}`
     expect(result).toBe(expected)
   })
 
@@ -56,21 +40,11 @@ describe('simple jsx', () => {
     expect(result).toBe(expected)
   })
 
+
   it('simple html jsx with attrs', () => {
     const template = `<div>Hello world!<span>abc</span></div>`
     const result = compileTemplateToReact(template, { jsx: true })
     const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",null,["Hello world!",jsx("span",null,["abc"])])}`
     expect(result).toBe(expected)
-  })
-})
-
-
-describe('jsx edge case', () => {
-  it('comment', () => {
-    expect(buildJsxFrom({type: 'comment', comment: 'xxx'}, false, false, 0,2).code).toBe('')
-    // @ts-ignore
-    expect(buildJsxFrom({type: 'xx', comment: 'xxx'}, false, false, 0,2).code).toBe('')
-    expect(buildJsxFrom({type: 'text', value: 'hello'}, false, false, 0,2).code).toBe('jsxs(frg,null,"hello")')
-    expect(buildJsxFrom({type: 'text', value: 'hello'}, false, true, 0,2).code).toBe('jsxs(frg, null, "hello")')
   })
 })

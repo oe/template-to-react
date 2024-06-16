@@ -16,7 +16,7 @@ const customTagMng = {
     }
     const tagName = `C$c${customTagMng.index++}`;
     const space = pretty ? ' ' : '';
-    customTagMng.cachedMap[tag] = {
+    customTagMng.cachedMap[propName] = {
       tagName,
       code: `const ${tagName}${space}=${space}${propName};`
     }
@@ -46,15 +46,16 @@ function getOpenTag(node: IElement | ISelfClosingElement, pretty: boolean, attrI
   } else {
     tag = customTagMng.getTag(tag, pretty);
   }
-  let attrString = node.attributes.map(({name, value}) =>
+  const attrs = node.attributes.map(({name, value}) =>
     getIndentContent(pretty, attrIndent, `${name}=${convertTextToExpression(value, { pretty, prefixProp: true, wrapStr: true, wrapExp: true })}`))
-    .join(pretty ? '\n' : ' ').trim();
-  
+  let attrString = attrs.map(item => item.trim()).join(' ').trim()
   if (pretty && attrString && attrString.length > 20) {
-    attrString = `\n${getIndent(attrIndent)}` + attrString + '\n' + getIndent(attrIndent - indentSize);
+    attrString = `\n` + attrs.join('\n') + '\n' + getIndent(attrIndent - indentSize);
+  } else if (attrString) {
+    attrString = ' ' + attrString
   }
 
-  return { tag, tagWithAttrs: attrString ? `${tag} ${attrString}` : `${tag}`};
+  return { tag, tagWithAttrs: attrString ? `${tag}${attrString}` : `${tag}`};
 }
 
 /**
@@ -76,16 +77,15 @@ function buildHtmlFromInner(node: INode, pretty: boolean, indent: number, indent
         return `${leadingIndent}<${tagWithAttrs}/>`;
       }
       return `${leadingIndent}<${tagWithAttrs}>${node.children.map(child => buildHtmlFromInner(child, pretty, indent + indentSize, indentSize)).join('')}${leadingIndent}</${tag}>`;
-    default:
-      return '';
   }
+  return '';
 }
 
 export function buildHtmlFrom(node: INode, pretty: boolean, indent: number, indentSize: number) {
   customTagMng.reset()
   const content = buildHtmlFromInner(node, pretty, indent, indentSize).trim();
   const tagCode = customTagMng.getTagCode(pretty, indent);
-  const code = pretty ? `(${content})` : content;
+  const code = pretty && content ? `(${content})` : content;
   return {
     code,
     injectedCode: tagCode

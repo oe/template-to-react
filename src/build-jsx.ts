@@ -1,15 +1,13 @@
 import type { IText, INode, IElement, ISelfClosingElement, IAttribute } from './parser';
 import { getIndent, isFragName, isValidVariableName, convertTextToExpression } from './common';
 
-
-
 function getTextNode(node: IText, pretty: boolean, isRoot: boolean) {
   const content = convertTextToExpression(node.value,{
     pretty, wrapExp: false, wrapStr: true, prefixProp: false
   })
   if (!isRoot) return content
   const space = pretty ? ' ' : ''
-  return `jsx(frg,${space}null,${space}${content})`
+  return `jsxs(frg,${space}null,${space}${content})`
 }
 
 function getTagName(node: IElement | ISelfClosingElement) {

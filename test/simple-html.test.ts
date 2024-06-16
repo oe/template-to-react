@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { compileTemplateToReact } from '../src'
+import { buildHtmlFrom } from '../src/build-html'
 
 describe('simple html', () => { 
   it('compile text', () => {
@@ -62,5 +63,15 @@ describe('simple html pretty', () => {
     Hello world!
   </div>)
 }`)
+  })
+})
+
+describe('other edge case', () => {
+  it('buildHtmlFrom', () => {
+    expect(buildHtmlFrom({type: 'comment', comment: 'xxx'}, true, 2, 2).code).toBe('')
+    // @ts-ignore
+    expect(buildHtmlFrom({type: 'xxx', comment: 'xxx'}, true, 2, 2).code).toBe('')
+    // @ts-ignore
+    expect(buildHtmlFrom({abc: 'xxx', comment: 'xxx'}, true, 2, 2).code).toBe('')
   })
 })
