@@ -110,7 +110,7 @@ export interface IElement {
 /**
  * html self closing tag node
  */
-export interface ISelfClosingTag {
+export interface ISelfClosingElement {
   type: 'selfClosingTag';
   name: {
     type: 'tag' | 'placeholder';
@@ -122,8 +122,7 @@ export interface ISelfClosingTag {
 /**
  * html node
  */
-export type INode = IElement | IText | IComment | ISelfClosingTag
-
+export type INode = IElement | IText | IComment | ISelfClosingElement
 
 /**
  * html custom parser support placeholder as tag name
@@ -132,26 +131,9 @@ export const parser = peg.generate(htmlSyntax) as {
   parse: (input: string) => INode[];
 };
 
-/**
- * build html string from node array
- * @param nodes node array
- * @returns string
- */
-export function buildHtmlFrom(nodes: INode[]): string {
-  return nodes.map(node => {
-    switch (node.type) {
-      case 'comment':
-        return
-      case 'text':
-        return node.value;
-      case 'tag':
-        return `<${node.name.name} ${node.attributes.map(({name, value}) => `${name}="${value}"`).join(' ')}>${buildHtmlFrom(node.children)}</${node.name.name}>`;
-      case 'selfClosingTag':
-        return `<${node.name.name} ${node.attributes.map(({name, value}) => `${name}="${value}"`).join(' ')}/>`;
-    }
-  }).filter(Boolean).join('');
-}
-
-
-// const content = parser.parse('<{p1}>xxx</{p1}>')
-// console.log(JSON.stringify(content))
+// const template = `
+// <{p1}>xxx</{p1}>
+// <div title="中文"><span>xxx</span> 中文省赛风</div>
+// `
+// const content = parser.parse(template)
+// console.log(JSON.stringify(content, null, 2))
