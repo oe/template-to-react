@@ -1,7 +1,7 @@
 import { parser, type INode, type IAttribute } from './parser';
 import { getIndent, FRG_NAME, getIndentContent, standardizeProp } from './common';
 import { buildHtmlFrom } from './build-html';
-import { generateJsxStatement, buildJsxFrom } from './build-jsx'
+import { buildJsxFrom, type IJsxOptions } from './build-jsx'
 export * from './parser';
 /**
  * jsx special attributes mapping
@@ -65,7 +65,7 @@ export interface ITemplateToReactOptions {
   reserverWhitespace?: boolean;
   /**
    * component name
-   * @default 'TemplateComponent'
+   * @default TemplateComponent
    */
   componentName?: string;
   /**
@@ -77,25 +77,7 @@ export interface ITemplateToReactOptions {
    * whether convert to jsx function call
    * @default false, true for React, object for custom jsx function
    */
-  jsx?: boolean | {
-    /**
-     * Fragment component name
-     * use `React.Fragment` for default
-     * @default false
-     */
-    fragment: string;
-    /**
-     * function name to create React element
-     * use `React.createElement` for default
-     * @default false
-     */
-    jsx: string;
-    /**
-     * function name to create React element root
-     * use `React.createElement` for default
-     */
-    jsxs: string;
-  }
+  jsx?: IJsxOptions
 }
 
 /**
@@ -114,32 +96,19 @@ export function compileTemplateToReact(template: string, options?: ITemplateToRe
     ? { type: 'tag', name: { type: 'placeholder', name: FRG_NAME }, attributes: [], children: convertedAst }
     : convertedAst[0];
 
-  const initialIndent = typeof pretty === 'object' ? pretty.initialIndent : 0;
   const indentSize = typeof pretty === 'object' ? pretty.indentSize : typeof pretty === 'number' ? pretty : 2;
+  const initialIndent = typeof pretty === 'object' ? pretty.initialIndent : 0;
   const leadingIndent = getIndentContent(isPretty, initialIndent, '');
   const fnContentIndent = initialIndent + indentSize;
 
+  const { code, injectedCode } = jsx
+    ? buildJsxFrom(astTree, jsx, isPretty, fnContentIndent, indentSize)
+    : buildHtmlFrom(astTree, isPretty, fnContentIndent, indentSize);
+
+  console.log('initialIndent', initialIndent, indentSize)
   const space = isPretty ? ' ' : '';
-  const fnTemplate = (code: string) => {
-    return `${leadingIndent}function ${componentName}(props)${space}{${generateJsxStatement(jsx, isPretty, fnContentIndent)}${
-      isPretty
-      ? `\n${getIndent(fnContentIndent)}return ${code}\n${leadingIndent}}`
-      : `return ${code}}` }`;
-  }
-
-  if (jsx) {
-    return fnTemplate(buildJsxFrom(astTree, isPretty, initialIndent + indentSize, indentSize).trim())
-  } else {
-    return fnTemplate(buildHtmlFrom(astTree, isPretty, initialIndent + indentSize, indentSize).trim())
-  }
+  return `${leadingIndent}function ${componentName}(props)${space}{${injectedCode}${
+    isPretty
+    ? `\n${getIndent(fnContentIndent)}return ${code}\n${leadingIndent}}`
+    : `return ${code}}` }`;
 }
-
-// sample
-// const template = `<div>ww<span>Hello, {user}! You Got 
-// dsdsd
-// <{p1} class="{3className}" data-id="{id} haha" data-tag="</{p3}>">{score}</{p1}>!
-// <{w31} class="{className}" data-id="{id}">{score} good</{w31}>!
-// <span class="hilight" data-id="{pp} sss">Great!</span></span></div>`;
-// const reactComponentString = compileTemplateToReact(template, { pretty: false, jsx: true, reserverWhitespace: false });
-// console.log(reactComponentString);
-// console.log('\ndone')

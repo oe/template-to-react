@@ -1,6 +1,36 @@
 import type { INode, IElement, ISelfClosingElement } from './parser';
 import { getIndent, isFragName, getIndentContent, convertTextToExpression } from './common';
 
+const customTagMng = {
+  index: 0,
+  cachedMap: {} as Record<string, { tagName: string, code: string }>,
+  reset() {
+    customTagMng.index = 0;
+    customTagMng.cachedMap = {};
+  },
+  getTag(tag: string, pretty: boolean) {
+    if (!/^{([^\b}]+)}$/.test(tag)) return tag;
+    const propName = RegExp.$1;
+    if (customTagMng.cachedMap[propName]) {
+      return customTagMng.cachedMap[propName].tagName;
+    }
+    const tagName = `C$c${customTagMng.index++}`;
+    const space = pretty ? ' ' : '';
+    customTagMng.cachedMap[tag] = {
+      tagName,
+      code: `const ${tagName}${space}=${space}${propName};`
+    }
+    return tagName;
+  },
+  getTagCode(pretty: boolean, indent: number) {
+    const codes = Object.values(customTagMng.cachedMap).map(({ code }) => code);
+    if (!codes.length) return '';
+    if (!pretty) return codes.join('');
+    const leadingIndent = `\n${getIndent(indent)}`;
+    return leadingIndent + codes.join(leadingIndent);
+  }
+}
+
 
 /**
  * create React element string
@@ -13,6 +43,8 @@ function getOpenTag(node: IElement | ISelfClosingElement, pretty: boolean, attrI
   let tag = node.name.name
   if (isFragName(tag)) {
     tag = ''
+  } else {
+    tag = customTagMng.getTag(tag, pretty);
   }
   let attrString = node.attributes.map(({name, value}) =>
     getIndentContent(pretty, attrIndent, `${name}=${convertTextToExpression(value, { pretty, prefixProp: true, wrapStr: true, wrapExp: true })}`))
@@ -49,7 +81,13 @@ function buildHtmlFromInner(node: INode, pretty: boolean, indent: number, indent
   }
 }
 
-export function buildHtmlFrom(node: INode, pretty: boolean, indent: number, indentSize: number): string {
+export function buildHtmlFrom(node: INode, pretty: boolean, indent: number, indentSize: number) {
+  customTagMng.reset()
   const content = buildHtmlFromInner(node, pretty, indent, indentSize).trim();
-  return pretty ? `(${content})` : content;
+  const tagCode = customTagMng.getTagCode(pretty, indent);
+  const code = pretty ? `(${content})` : content;
+  return {
+    code,
+    injectedCode: tagCode
+  }
 }

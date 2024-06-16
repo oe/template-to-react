@@ -66,18 +66,39 @@ function buildJsxFromInner(node: INode, pretty: boolean, indent: number, indentS
       return '';
   }
 }
-export function buildJsxFrom(node: INode, pretty: boolean, indent: number, indentSize: number): string {
-  return buildJsxFromInner(node, pretty, indent, indentSize, true)
+export function buildJsxFrom(node: INode, jsx: IJsxOptions, pretty: boolean, indent: number, indentSize: number) {
+  const code = buildJsxFromInner(node, pretty, indent, indentSize, true)
+  const injectedCode = generateJsxStatement(jsx, pretty, indent)
+  return {
+    code,
+    injectedCode
+  }
 }
 
-
-interface IJsxOptions {
-  fragment: string
-  jsx: string
-  jsxs: string
+/**
+ * JSX options
+ */
+export type IJsxOptions = boolean | undefined | {
+  /**
+   * Fragment component name
+   * use `React.Fragment` for default
+   * @default false
+   */
+  fragment: string;
+  /**
+   * function name to create React element
+   * use `React.createElement` for default
+   * @default false
+   */
+  jsx: string;
+  /**
+   * function name to create React element root
+   * use `React.createElement` for default
+   */
+  jsxs: string;
 }
 
-export function generateJsxStatement (jsx: undefined | boolean | IJsxOptions, pretty: boolean, indent: number) {
+function generateJsxStatement (jsx: undefined | boolean | IJsxOptions, pretty: boolean, indent: number) {
   if (!jsx) return ''
   const space = pretty ? ' ' : ''
   const options = [

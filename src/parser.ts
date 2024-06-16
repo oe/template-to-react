@@ -130,10 +130,3 @@ export type INode = IElement | IText | IComment | ISelfClosingElement
 export const parser = peg.generate(htmlSyntax) as {
   parse: (input: string) => INode[];
 };
-
-// const template = `
-// <{p1}>xxx</{p1}>
-// <div title="中文"><span>xxx</span> 中文省赛风</div>
-// `
-// const content = parser.parse(template)
-// console.log(JSON.stringify(content, null, 2))
