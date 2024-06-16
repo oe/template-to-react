@@ -1,5 +1,5 @@
 import type { IText, INode, IElement, ISelfClosingElement, IAttribute } from './parser';
-import { getIndent, isFragName, isValidVariableName, getIndentContent, convertTextToExpression } from './common';
+import { getIndent, isFragName, isValidVariableName, convertTextToExpression } from './common';
 
 
 
