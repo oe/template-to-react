@@ -107,6 +107,22 @@ function MyComponent(props) {
 
 In this example, className, title, and description are placeholders that will be replaced with the corresponding props when the React component is rendered.
 
+> [!TIP]
+> This package is intend to run in build time(or prebuild, predev), but it doesn't limit the env, you can use it in browser or nodejs runtime.    
+> Example: run in browser
+> ```js
+> // make sure the compiled code can access the React
+> import React from 'react'
+> import ReactDOM from 'react-dom';
+> import { compileTemplateToReact } from 'template-to-react';
+> const htmlTemplate = '<div class="{className}">Hello, {name}!</div>';
+> // use jsx style, so the code can be a valid js code
+> const reactComponentCode = compileTemplateToReact(htmlTemplate, { jsx: true });
+> const CompiledComponent eval(`(${reactComponentCode})`);
+> ReactDOM.render(<CompiledComponent className="test" name="world" />, document.getElementById('root'));
+> ```
+
+
 ## API
 `compileTemplateToReact(template: string, options?: ITemplateToReactOptions): string`
 

@@ -2,7 +2,8 @@
   "name": "template-to-react",
   "description": "compile html string template to react component",
   "author": {
-    "name": "Saiya"
+    "name": "Saiya",
+    "url": "https://evecalm.com/"
   },
   "keywords": [
     "react",
@@ -12,6 +13,9 @@
     "transpiler",
     "compiler",
     "converter"
+  ],
+  "files": [
+    "dist"
   ],
   "repository": {
     "type": "git",
