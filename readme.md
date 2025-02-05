@@ -118,7 +118,7 @@ In this example, className, title, and description are placeholders that will be
 > const htmlTemplate = '<div class="{className}">Hello, {name}!</div>';
 > // use jsx style, so the code can be a valid js code
 > const reactComponentCode = compileTemplateToReact(htmlTemplate, { jsx: true });
-> const CompiledComponent eval(`(${reactComponentCode})`);
+> const CompiledComponent = eval(`(${reactComponentCode})`);
 > ReactDOM.render(<CompiledComponent className="test" name="world" />, document.getElementById('root'));
 > ```
 
