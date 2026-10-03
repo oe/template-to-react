@@ -32,7 +32,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Check React 18 compatibility
         if: matrix.react == 18
-        run: pnpm add --save-dev --lockfile=false react@18.3.1 react-dom@18.3.1
+        run: pnpm add --save-dev react@18.3.1 react-dom@18.3.1
       - run: pnpm test:coverage
       - run: pnpm build
       - run: pnpm test:package
