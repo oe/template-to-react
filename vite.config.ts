@@ -1,7 +1,5 @@
-/// <reference types="vitest/config" />
-
-import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
+import { defineConfig } from 'vitest/config'
+import dts from 'unplugin-dts/vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -11,7 +9,7 @@ export default defineConfig({
       name: 'template2react',
       fileName: 'index',
     },
-     rollupOptions: {
+    rolldownOptions: {
       // make sure to externalize deps that shouldn't be bundled
       // into your library
       external: ['pegjs'],
@@ -29,8 +27,16 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     exclude: ['example/**'],
     coverage: {
+      include: ['src/**/*.ts'],
       exclude: ['example/**', 'test/coverage/**'],
     },
   },
-  plugins: [react(), dts({ rollupTypes: true })]
+  plugins: [
+    react(),
+    dts({
+      include: ['src/**/*.ts'],
+      bundleTypes: true,
+      outDirs: [{ dir: 'dist' }, { dir: 'dist', moduleFormat: 'cjs' }],
+    }),
+  ],
 })

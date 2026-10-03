@@ -1,5 +1,5 @@
 import type { INode, IElement, ISelfClosingElement } from './parser';
-import { getIndent, isFragName, getIndentContent, convertTextToExpression } from './common';
+import { getIndent, isFragName, getIndentContent, convertTextToExpression, standardizeProp } from './common';
 
 const customTagMng = {
   index: 0,
@@ -46,8 +46,14 @@ function getOpenTag(node: IElement | ISelfClosingElement, pretty: boolean, attrI
   } else {
     tag = customTagMng.getTag(tag, pretty);
   }
-  const attrs = node.attributes.map(({name, value}) =>
-    getIndentContent(pretty, attrIndent, `${name}=${convertTextToExpression(value, { pretty, prefixProp: true, wrapStr: true, wrapExp: true })}`))
+  const attrs = node.attributes.map(({name, value}) => {
+    const expression = convertTextToExpression(value, { pretty, prefixProp: true, wrapStr: true, wrapExp: true });
+    // JSX quoted attributes decode HTML entities and treat backslashes literally.
+    // Preserve that legacy behavior while escaping embedded double quotes.
+    const escaped = !/{[^{}\r\n]+}/.test(value)
+      ? `"${value.replace(/"/g, '&quot;')}"` : expression;
+    return getIndentContent(pretty, attrIndent, `${name}=${escaped}`);
+  })
   let attrString = attrs.map(item => item.trim()).join(' ').trim()
   if (pretty && attrString && attrString.length > 20) {
     attrString = `\n` + attrs.join('\n') + '\n' + getIndent(attrIndent - indentSize);
@@ -69,7 +75,17 @@ function buildHtmlFromInner(node: INode, pretty: boolean, indent: number, indent
     case 'comment':
       return '';
     case 'text':
-      return leadingIndent + (pretty ? node.value : node.value.replace(/\n/g, '\\n'))
+      return leadingIndent + node.value.split(/({[^{}\r\n]+})/g).map(part => {
+        if (part.startsWith('{') && part.endsWith('}')) {
+          return `{${standardizeProp(part.slice(1, -1))}}`;
+        }
+        // Keep legacy JSX entity decoding. Escape syntax characters without
+        // converting the entire text segment to a JavaScript string literal.
+        return (pretty ? [part] : part.split(/(\r\n|\r|\n)/g)).map(chunk =>
+          !pretty && /^[\r\n]+$/.test(chunk) ? `{${JSON.stringify(chunk)}}`
+            : chunk.replace(/{/g, '&#123;').replace(/}/g, '&#125;').replace(/>/g, '&gt;')
+        ).join('');
+      }).join('')
     case 'tag':
     case 'selfClosingTag':
       const { tag, tagWithAttrs } = getOpenTag(node, pretty, indent + indentSize, indentSize);

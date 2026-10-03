@@ -13,16 +13,16 @@ const htmlSyntax = `
     / text:text { return { type: 'text', value: text }; }
 
   tag
-    = "<" startTagName:tagName attributes:attributes space* ">" children:document "</" endTagName:tagName ">" 
-      { 
+    = "<" startTagName:tagName attributes:attributes space* ">" children:document "</" endTagName:tagName space* ">"
+      {
         if (startTagName.name !== endTagName.name) {
           throw new Error('Tag names do not match: ' + startTagName.name + ' vs. ' + endTagName.name);
         }
-        return { type: 'tag', name: startTagName, attributes, children }; 
+        return { type: 'tag', name: startTagName, attributes, children };
       }
 
   selfClosingTag
-    = "<" name:tagName attributes:attributes space* "/>" 
+    = "<" name:tagName attributes:attributes space* "/>"
       { return { type: 'selfClosingTag', name, attributes }; }
 
   tagName
@@ -30,8 +30,8 @@ const htmlSyntax = `
     / placeholder:placeholder { return placeholder; }
 
   identifier
-    = start:[$a-zA-Z] rest:[$a-zA-Z0-9_]* { return start + rest.join(''); }
-  
+    = start:[$_a-zA-Z] rest:[$a-zA-Z0-9_]* { return start + rest.join(''); }
+
   tagIdentifier
     = start:[a-zA-Z] rest:[a-zA-Z0-9_-]*
       {
@@ -40,7 +40,7 @@ const htmlSyntax = `
         }
         return start + rest.join('');
       }
-  
+
   dashIdentifier
     = start:[a-zA-Z] rest:[a-zA-Z0-9_-]* { return start + rest.join(''); }
 
@@ -51,7 +51,7 @@ const htmlSyntax = `
     = attributes:attribute* { return attributes; }
 
   attribute
-    = space* name:dashIdentifier "=" value:quotedValue 
+    = space* name:dashIdentifier space* "=" space* value:quotedValue
       { return { name, value }; }
 
   quotedValue
@@ -62,7 +62,7 @@ const htmlSyntax = `
     = text:[^<]+ { return text.join(''); }
 
   space
-    = " "
+    = [ \t\\r\\n]
 
   comment
     = "<!--" comment:(!"-->" .)* "-->"
@@ -101,7 +101,7 @@ export interface IElement {
   type: 'tag';
   name: {
     type: 'tag' | 'placeholder';
-    name: string 
+    name: string
   }
   attributes: IAttribute[];
   children: INode[];
@@ -114,7 +114,7 @@ export interface ISelfClosingElement {
   type: 'selfClosingTag';
   name: {
     type: 'tag' | 'placeholder';
-    name: string 
+    name: string
   }
   attributes: IAttribute[];
 }

@@ -2,7 +2,7 @@ import { type INode } from './parser';
 /**
  * fragment name, random string
  */
-export const FRG_NAME = typeof crypto === 'object' ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+export const FRG_NAME = typeof crypto === 'object' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 
 /**
  * is fragment node
@@ -23,7 +23,7 @@ export function getIndentContent(pretty: boolean, indent: number, content: strin
 }
 
 export function isValidVariableName(name: string) {
-  return /^[$a-z][\da-z$]*$/i.test(name);
+  return /^[$_\p{ID_Start}][$\u200C\u200D\p{ID_Continue}]*$/u.test(name);
 }
 
 /**
@@ -35,7 +35,7 @@ export function standardizeProp(prop: string): string {
   if (isValidVariableName(prop)) {
     return `props.${prop}`;
   }
-  return `props["${prop}"]`;
+  return `props[${JSON.stringify(prop)}]`;
 }
 
 /**
@@ -49,8 +49,8 @@ export function standardizeProp(prop: string): string {
  * @returns expression string
  */
 export function convertTextToExpression(text: string, options?: { wrapExp?: boolean, wrapStr?: boolean, prefixProp?: boolean, pretty?: boolean}) {
-  if (/{[^\b}]+}/.test(text)) {
-    const parts = text.split(/({[^\b}]+})/g);
+  if (/{[^{}\r\n]+}/.test(text)) {
+    const parts = text.split(/({[^{}\r\n]+})/g);
     const convertedParts = parts.map(part => {
       if (part.startsWith('{') && part.endsWith('}')) {
         const prop = part.slice(1, -1); // remove the curly braces
@@ -61,7 +61,12 @@ export function convertTextToExpression(text: string, options?: { wrapExp?: bool
       }
     });
     const joiner = options?.pretty ? ' + ' : '+'
-    const exp = convertedParts.filter(Boolean).join(joiner)
+    const values = convertedParts.filter((part): part is string => part !== null);
+    // Adjacent numeric placeholders must concatenate rather than add.
+    if (parts[1]?.startsWith('{') && parts[2] === '' && parts[3]?.startsWith('{')) {
+      values.unshift('""');
+    }
+    const exp = values.join(joiner)
     return options?.wrapExp ? `{${exp}}` : exp;
   } else {
     return options?.wrapStr ? JSON.stringify(text) : text;

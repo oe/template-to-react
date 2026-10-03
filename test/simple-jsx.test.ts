@@ -6,7 +6,7 @@ describe('simple jsx', () => {
   it('simple text jsx', () => {
     const template = `Hello world!`
     const result = compileTemplateToReact(template, { jsx: true })
-    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs(frg,null,["Hello world!"])}`
+    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs(frg,null,...["Hello world!"])}`
     expect(result).toBe(expected)
   })
 
@@ -17,7 +17,7 @@ describe('simple jsx', () => {
   const frg = React.Fragment;
   const jsx = React.createElement;
   const jsxs = React.createElement;
-  return jsxs(frg, null, [
+  return jsxs(frg, null, ...[
     "Hello world!"
   ])
 }`
@@ -27,14 +27,14 @@ describe('simple jsx', () => {
   it('simple html jsx', () => {
     const template = `<div>Hello world!</div>`
     const result = compileTemplateToReact(template, { jsx: true })
-    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",null,["Hello world!"])}`
+    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",null,...["Hello world!"])}`
     expect(result).toBe(expected)
   })
 
   it('simple html jsx with attrs', () => {
     const template = `<div class='abc' title="hello" data-id="xxx">Hello world!<br/></div>`
     const result = compileTemplateToReact(template, { jsx: true })
-    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",{className:"abc",title:"hello","data-id":"xxx"},["Hello world!",jsx("br",null,[])])}`
+    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",{className:"abc",title:"hello","data-id":"xxx"},...["Hello world!",jsx("br",null)])}`
     expect(result).toBe(expected)
   })
 
@@ -49,7 +49,7 @@ describe('simple jsx', () => {
     className: "abc",
     title: "hello",
     "data-id": "xxx"
-  }, [
+  }, ...[
     "Hello world!"
   ])
 }`
@@ -59,7 +59,7 @@ describe('simple jsx', () => {
   it('simple html jsx with attrs', () => {
     const template = `<div>Hello world!<span>abc</span></div>`
     const result = compileTemplateToReact(template, { jsx: true })
-    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",null,["Hello world!",jsx("span",null,["abc"])])}`
+    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",null,...["Hello world!",jsx("span",null,...["abc"])])}`
     expect(result).toBe(expected)
   })
 })
