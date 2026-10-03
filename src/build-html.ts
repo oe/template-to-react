@@ -1,5 +1,5 @@
 import type { INode, IElement, ISelfClosingElement } from './parser';
-import { getIndent, isFragName, getIndentContent, convertTextToExpression } from './common';
+import { getIndent, isFragName, getIndentContent, convertTextToExpression, standardizeProp } from './common';
 
 const customTagMng = {
   index: 0,
@@ -46,8 +46,12 @@ function getOpenTag(node: IElement | ISelfClosingElement, pretty: boolean, attrI
   } else {
     tag = customTagMng.getTag(tag, pretty);
   }
-  const attrs = node.attributes.map(({name, value}) =>
-    getIndentContent(pretty, attrIndent, `${name}=${convertTextToExpression(value, { pretty, prefixProp: true, wrapStr: true, wrapExp: true })}`))
+  const attrs = node.attributes.map(({name, value}) => {
+    const expression = convertTextToExpression(value, { pretty, prefixProp: true, wrapStr: true, wrapExp: true });
+    const escaped = !/{[^{}\r\n]+}/.test(value) && /["\\&\r\n]/.test(value)
+      ? `{${JSON.stringify(value)}}` : expression;
+    return getIndentContent(pretty, attrIndent, `${name}=${escaped}`);
+  })
   let attrString = attrs.map(item => item.trim()).join(' ').trim()
   if (pretty && attrString && attrString.length > 20) {
     attrString = `\n` + attrs.join('\n') + '\n' + getIndent(attrIndent - indentSize);
@@ -69,7 +73,13 @@ function buildHtmlFromInner(node: INode, pretty: boolean, indent: number, indent
     case 'comment':
       return '';
     case 'text':
-      return leadingIndent + (pretty ? node.value : node.value.replace(/\n/g, '\\n'))
+      return leadingIndent + node.value.split(/({[^{}\r\n]+})/g).map(part => {
+        if (part.startsWith('{') && part.endsWith('}')) {
+          return `{${standardizeProp(part.slice(1, -1))}}`;
+        }
+        // JSX interprets braces and entities; keep literal template text literal.
+        return /[{}>&\r\n]/.test(part) ? `{${JSON.stringify(part)}}` : part;
+      }).join('')
     case 'tag':
     case 'selfClosingTag':
       const { tag, tagWithAttrs } = getOpenTag(node, pretty, indent + indentSize, indentSize);

@@ -1,8 +1,9 @@
 import { parser, type INode, type IAttribute } from './parser';
-import { getIndent, FRG_NAME, getIndentContent, standardizeProp, hasRootNode } from './common';
+import { getIndent, FRG_NAME, getIndentContent, standardizeProp, hasRootNode, isValidVariableName } from './common';
 import { buildHtmlFrom } from './build-html';
 import { buildJsxFrom, type IJsxOptions } from './build-jsx'
 export * from './parser';
+export type { IJsxOptions } from './build-jsx';
 /**
  * jsx special attributes mapping
  */
@@ -11,6 +12,8 @@ const jsxAttributeMap: Record<string, string> = {
   'for': 'htmlFor',
 };
 
+const reservedNames = new Set(['break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'implements', 'import', 'in', 'instanceof', 'interface', 'let', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'static', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield', 'await', 'eval', 'arguments']);
+
 /**
  * convert HTML attributes to React attributes
  * @param attributes attributes object
@@ -18,7 +21,7 @@ const jsxAttributeMap: Record<string, string> = {
  */
 function convertAttributes(attributes: IAttribute[]): IAttribute[] {
   return attributes.map(({ name, value }) => {
-    let newKey = jsxAttributeMap[name] || name;
+    let newKey = Object.prototype.hasOwnProperty.call(jsxAttributeMap, name) ? jsxAttributeMap[name] : name;
     return { name: newKey, value };
   })
 }
@@ -31,7 +34,6 @@ function convertAttributes(attributes: IAttribute[]): IAttribute[] {
 function convertNode(node: INode, reserverWhitespace?: boolean): INode | undefined {
   if (node.type === 'comment') return
   if (node.type === 'text') {
-    node.value = node.value.replace(/{(\w+)}/g, (_, $1) => `{${standardizeProp($1)}}`)
     if (!reserverWhitespace) {
       node.value = node.value.trim();
     }
@@ -84,6 +86,9 @@ export interface ITemplateToReactOptions {
  */
 export function compileTemplateToReact(template: string, options?: ITemplateToReactOptions): string {
   const { componentName = 'TemplateComponent', jsx, pretty, reserverWhitespace } = options || {};
+  if (!isValidVariableName(componentName) || reservedNames.has(componentName)) {
+    throw new Error('componentName must be a valid JavaScript function name');
+  }
   const ast = parser.parse(template.trim());
   const isPretty = !!pretty
 
@@ -95,6 +100,9 @@ export function compileTemplateToReact(template: string, options?: ITemplateToRe
 
   const indentSize = typeof pretty === 'object' ? pretty.indentSize : typeof pretty === 'number' ? pretty : 2;
   const initialIndent = typeof pretty === 'object' ? pretty.initialIndent : 0;
+  if (![indentSize, initialIndent].every(value => Number.isSafeInteger(value) && value >= 0)) {
+    throw new Error('Indentation must use non-negative integers');
+  }
   const leadingIndent = getIndentContent(isPretty, initialIndent, '');
   const fnContentIndent = initialIndent + indentSize;
 

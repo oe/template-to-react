@@ -3,7 +3,7 @@ import { getIndent, isFragName, isValidVariableName, convertTextToExpression } f
 
 function getTextNode(node: IText, pretty: boolean, isRoot: boolean) {
   const content = convertTextToExpression(node.value,{
-    pretty, wrapExp: false, wrapStr: true, prefixProp: false
+    pretty, wrapExp: false, wrapStr: true, prefixProp: true
   })
   if (!isRoot) return content
   const space = pretty ? ' ' : ''
@@ -15,14 +15,14 @@ function getTagName(node: IElement | ISelfClosingElement) {
   if (isFragName(tag)) {
     return 'frg'
   }
-  if (/^{([\w.]+)}$/.test(tag)) {
-    return RegExp.$1
+  if (node.name.type === 'placeholder') {
+    return tag.slice(1, -1)
   }
   return `"${tag}"`
 }
 
 function getPropName(name: string) {
-  return isValidVariableName(name) ? name : `"${name}"`
+  return isValidVariableName(name) ? name : JSON.stringify(name)
 }
 
 
@@ -41,13 +41,18 @@ function getAttributes(attributes: IAttribute[], pretty: boolean, indent: number
 function getElement(node: IElement | ISelfClosingElement, pretty: boolean, indent: number, indentSize: number, isRoot: boolean) {
   const fn = isRoot ? 'jsxs' : 'jsx'
   const space = pretty ? ' ' : ''
-  const children = node.type === 'tag' ? getChildren(node.children, pretty, indent + indentSize, indentSize) : '[]'
+  const children = node.type === 'tag' ? `,${space}${getChildren(node.children, pretty, indent + indentSize, indentSize)}` : ''
   const attrString = getAttributes(node.attributes, pretty, indent + indentSize, indentSize)
-  return `${fn}(${getTagName(node)},${space}${attrString},${space}${children})`
+  return `${fn}(${getTagName(node)},${space}${attrString}${children})`
 }
 
 function getChildren(nodes: INode[], pretty: boolean, indent: number, indentSize: number) {
-  const items = nodes.map(node => buildJsxFromInner(node, pretty, indent, indentSize))
+  // Keep text placeholders as separate React children, including element props.
+  const items = nodes.flatMap(node => {
+    if (node.type !== 'text') return [buildJsxFromInner(node, pretty, indent, indentSize)];
+    return node.value.split(/({[^{}\r\n]+})/g).filter(part => part !== '').map(value =>
+      buildJsxFromInner({ type: 'text', value }, pretty, indent, indentSize));
+  })
   if (!pretty) return `[${items.join(',')}]`
   return `[\n${getIndent(indent)}${items.join(`,\n${getIndent(indent)}`)}\n${getIndent(indent - indentSize)}]`
 }
@@ -100,13 +105,11 @@ export type IJsxOptions = boolean | undefined | {
 function generateJsxStatement (jsx: undefined | boolean | IJsxOptions, pretty: boolean, indent: number) {
   if (!jsx) return ''
   const space = pretty ? ' ' : ''
+  const factories = typeof jsx === 'object' ? jsx : undefined;
   const options = [
-    // @ts-ignore
-    `const frg${space}=${space}${jsx.fragment || `React.Fragment`};`,
-    // @ts-ignore
-    `const jsx${space}=${space}${jsx.jsx || `React.createElement`};`,
-    // @ts-ignore
-    `const jsxs${space}=${space}${jsx.jsxs || `React.createElement`};`,
+    `const frg${space}=${space}${factories?.fragment || `React.Fragment`};`,
+    `const jsx${space}=${space}${factories?.jsx || `React.createElement`};`,
+    `const jsxs${space}=${space}${factories?.jsxs || `React.createElement`};`,
   ]
   if (!pretty) return options.join('')
   return '\n' + options.map(option => `${getIndent(indent)}${option}`).join('\n')

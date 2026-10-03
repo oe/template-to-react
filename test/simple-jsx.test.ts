@@ -34,7 +34,7 @@ describe('simple jsx', () => {
   it('simple html jsx with attrs', () => {
     const template = `<div class='abc' title="hello" data-id="xxx">Hello world!<br/></div>`
     const result = compileTemplateToReact(template, { jsx: true })
-    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",{className:"abc",title:"hello","data-id":"xxx"},["Hello world!",jsx("br",null,[])])}`
+    const expected = `function TemplateComponent(props){const frg=React.Fragment;const jsx=React.createElement;const jsxs=React.createElement;return jsxs("div",{className:"abc",title:"hello","data-id":"xxx"},["Hello world!",jsx("br",null)])}`
     expect(result).toBe(expected)
   })
 

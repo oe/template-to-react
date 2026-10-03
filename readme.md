@@ -13,174 +13,111 @@
     <img src="https://img.shields.io/npm/dm/template-to-react.svg" alt="npm version" height="20">
   </a>
 </div>
-Compiles HTML templates into React components, you may use it to convert HTML templates into React components at build time(or prebuild/predev).
 
+Compiles a small HTML template language into React component source code. Use it at build time to turn static templates and `{propName}` placeholders into `.jsx` files or plain JavaScript functions.
 
-> [!CAUTION]
-> This package is still in development and may not be stable. Please report any issues you encounter.
+## Maintenance status
+
+This is a small, experimental utility maintained on a best-effort basis. Maintenance focuses on compiler correctness, React compatibility, dependency updates, and reproducible builds. The current API is intended for simple templates; a full HTML parser, arbitrary JavaScript expressions, and framework integrations are outside its scope.
 
 ## Installation
 
-```bash
-# use npm
-npm install template-to-react -D
-
-# use yarn
-yarn add template-to-react -D
+```sh
+npm install --save-dev template-to-react
+# or
+yarn add --dev template-to-react
 ```
 
-## Usage
-Import the `compileTemplateToReact` function from the package:
+The package exports ESM and CommonJS entry points and TypeScript declarations. React is used by the generated component and is supplied by your application. Rendering tests cover React 18 and 19.
+
+## Build-time usage
 
 ```js
+import { writeFile } from 'node:fs/promises';
 import { compileTemplateToReact } from 'template-to-react';
+
+const template = '<div class="{className}">Hello, {name}!</div>';
+const code = compileTemplateToReact(template, { componentName: 'Greeting' });
+
+await writeFile(
+  './Greeting.jsx',
+  `import React from 'react';\nexport ${code}\n`,
+);
+// function Greeting(props){return <div className={props.className}>Hello, {props.name}!</div>}
 ```
 
-Then, you can use it to compile an HTML template into a React component:
+Compile the generated JSX with your application's existing JSX toolchain. For output that is already valid JavaScript, use `jsx: true`; the generated function references `React.Fragment` and `React.createElement`:
 
 ```js
-const htmlTemplate = '<div class="{className}">Hello, {name}!</div>';
-const reactComponentCode = compileTemplateToReact(htmlTemplate);
-// code:  `function TemplateComponent(props){return <div className={props.className}>Hello, {props.name}!</div>}`
+const code = compileTemplateToReact(
+  '<div class="{className}">Hello, {name}!</div>',
+  { componentName: 'Greeting', jsx: true, pretty: true },
+);
+// Save it with `import React from 'react';` and an export, as above.
 ```
 
-In the above example, className and name are placeholders that will be replaced with the corresponding props when the React component is rendered.
+Templates and options must come from trusted sources. Compile during the build and import the result. The compiler is not a sanitizer; avoid evaluating remotely supplied templates. The parser currently generates its grammar at module initialization, which also requires dynamic code generation. Strict browser CSP environments should consume the generated component instead of loading this compiler.
 
-Here's another example with a more complex template:
-```js
-const htmlTemplate = `
-  <div class="{className}" data-title="Hello {user}">
-    <h1>{title}</h1>
-    <p>{description}</p>
-    <{c1}>{c2}</{c1}>
-    <{c3}/>
-  </div>
-`;
-// compile the template to a React component
-const reactComponentCode = compileTemplateToReact(htmlTemplate, {
-  componentName: 'MyComponent',
-  pretty: true,
-});
-// will output:
-reactComponentCode = `
-function MyComponent (props) {
-  const C$c0 = props.c1;
-  const C$c0 = props.c3;
-  return (<div className={props.className} data-title={"Hello" + props.user}>
-    <h1>{props.title}</h1>
-    <p>{props.description}</p>
-    <C$c0>{props.c2}</C$c0>
-    <C$c1/>
-  </div>)
-}`;
+## Template syntax
 
-// compile the template to a React component with custom jsx options
-const reactComponentCodeJsx = compileTemplateToReact(htmlTemplate, {
-  componentName: 'MyComponent',
-  pretty: true,
-  jsx: true,
-});
-
-// will output:
-reactComponentCodeJsx = `
-function MyComponent(props) {
-  const frg = React.Fragment;
-  const jsx = React.createElement;
-  const jsxs = React.createElement;
-  return jsxs("div", {
-    className: props.className,
-    "data-title": "Hello " + props.user
-  }, [
-    jsx("h1", null, [
-      props.title
-    ]),
-    jsx("p", null, [
-      props.description
-    ]),
-    jsx(props.c1, null, [
-      props.c2
-    ]),
-    jsx(props.c3, null, [])
-  ])
-}`;
-```
-
-In this example, className, title, and description are placeholders that will be replaced with the corresponding props when the React component is rendered.
-
-> [!TIP]
-> This package is intend to run in build time(or prebuild, predev), but it doesn't limit the env, you can use it in browser or nodejs runtime.    
-> Example: run in browser
-> ```js
-> // make sure the compiled code can access the React
-> import React from 'react'
-> import ReactDOM from 'react-dom';
-> import { compileTemplateToReact } from 'template-to-react';
-> const htmlTemplate = '<div class="{className}">Hello, {name}!</div>';
-> // use jsx style, so the code can be a valid js code
-> const reactComponentCode = compileTemplateToReact(htmlTemplate, { jsx: true });
-> const CompiledComponent = eval(`(${reactComponentCode})`);
-> ReactDOM.render(<CompiledComponent className="test" name="world" />, document.getElementById('root'));
-> ```
-
+- Use lowercase tags, explicit closing tags, and self-closing void elements: `<div>…</div>`, `<input/>`, `<br/>`.
+- Attribute values must be single- or double-quoted. Multiline attributes and whitespace around `=` are supported. Bare boolean attributes and unquoted values are not supported; use `disabled="{disabled}"` with a boolean prop.
+- `{name}` references a prop. Text and attribute placeholders also support property keys such as `{user-name}` and `{3className}`. They are property names, not JavaScript expressions or nested paths.
+- Dynamic tags accept identifier placeholders, including `$` and `_`: `<{_component}>{children}</{_component}>`. The corresponding prop supplies a React component or tag name. Opening and closing tag names must match.
+- A single placeholder preserves its prop value. Mixed attribute values concatenate into strings; adjacent numeric placeholders such as `{a}{b}` produce `"12"` for `a: 1, b: 2`.
+- `class` becomes `className`, and `for` becomes `htmlFor`. Supply other React attribute names directly, such as `tabIndex` and `readOnly`. Use a prop for object values: `style="{style}"`. CSS declaration strings are not converted into style objects.
+- Comments are removed. Multiple roots and empty templates use a fragment. Doctypes, implicit tag closing, raw script contents, and general SVG conversion are not supported.
+- Literal text and attribute values are preserved without HTML entity decoding. Write `&` when you want an ampersand; `&amp;` remains the literal text `&amp;` in both output modes.
+- Leading and trailing whitespace in text nodes is trimmed by default. `reserverWhitespace: true` preserves it in compact output. Pretty printing trims it; the template as a whole is always trimmed.
 
 ## API
-`compileTemplateToReact(template: string, options?: ITemplateToReactOptions): string`
 
-This function takes an HTML template as a string and an optional options object, and returns a React component. The HTML template can contain placeholders in the form {propName} that will be replaced with the corresponding props when the React component is rendered.
-
-The `ITemplateToReactOptions` object can have the following properties:
 ```ts
-export interface ITemplateToReactOptions {
-  /**
-   * whether reserve leading and trailing whitespace in text node
-   *  invalid when pretty is true and jsx is true
-   */
-  reserverWhitespace?: boolean;
-  /**
-   * component name
-   * @default TemplateComponent
-   */
-  componentName?: string;
-  /**
-   * pretty print
-   * @default false, true for 2 spaces, number for custom spaces
-   */
-  pretty?: boolean | number | { initialIndent: number, indentSize: number };
-  /**
-   * whether convert to jsx function call
-   * @default false, true for React, object for custom jsx function
-   */
-  jsx?: IJsxOptions
-}
-
-/**
- * JSX options
- */
-export type IJsxOptions = boolean | undefined | {
-  /**
-   * Fragment component name
-   * use `React.Fragment` for default
-   * @default false
-   */
-  fragment: string;
-  /**
-   * function name to create React element
-   * use `React.createElement` for default
-   * @default false
-   */
-  jsx: string;
-  /**
-   * function name to create React element root
-   * use `React.createElement` for default
-   */
-  jsxs: string;
-}
+compileTemplateToReact(template: string, options?: ITemplateToReactOptions): string
 ```
 
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Returns component source code, without imports or exports. Parse errors include PEG.js location information; mismatched tag names and invalid component names or indentation throw an error.
 
-Please make sure to update tests as appropriate.
+```ts
+import type { ITemplateToReactOptions, IJsxOptions } from 'template-to-react';
+
+interface ITemplateToReactOptions {
+  // Historical spelling retained for compatibility; defaults to false.
+  reserverWhitespace?: boolean;
+  // JavaScript function identifier; defaults to 'TemplateComponent'.
+  componentName?: string;
+  // true uses 2 spaces; numeric indentation must be a non-negative integer.
+  pretty?: boolean | number | { initialIndent: number; indentSize: number };
+  // false outputs JSX markup; true outputs React.createElement calls.
+  jsx?: IJsxOptions;
+}
+
+type IJsxOptions = boolean | undefined | {
+  fragment: string;
+  jsx: string;
+  jsxs: string;
+};
+```
+
+The object form of `jsx` inserts the supplied JavaScript references for a fragment and two factory functions. `jsxs` handles the root and `jsx` handles nested elements. Factories receive `(type, attributes, childrenArray)` for paired tags and `(type, attributes)` for self-closing tags. This is a custom factory contract, **not** the `react/jsx-runtime` API. The low-level `parser` and its AST types are also exported.
+
+## Development
+
+Use Node.js 22.12+ (22 or 24 LTS) and Yarn 1.22.22.
+
+```sh
+npm install --global yarn@1.22.22
+yarn install --frozen-lockfile
+yarn test:coverage
+yarn build
+yarn test:package
+yarn dev
+```
+
+`yarn test` runs once; `yarn test:watch` enables watch mode. The package smoke check installs a real tarball into an isolated temporary consumer, then verifies ESM/CommonJS loading and TypeScript declarations. It requires access to the npm registry. `prepublishOnly` runs the same checks before publication.
+
+CI checks Node.js 22/24, React 18/19, coverage, the library build, and the packaged entry points. Before contributing a compiler fix, add a regression test that renders the generated component where possible.
 
 ## License
+
 [MIT](./LICENSE)
