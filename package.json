@@ -25,7 +25,7 @@
     "type": "git",
     "url": "https://github.com/oe/template-to-react"
   },
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist/index.umd.cjs",
   "module": "dist/index.js",

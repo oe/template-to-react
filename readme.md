@@ -126,7 +126,7 @@ The object form of `jsx` inserts the supplied JavaScript references for a fragme
 
 ## Upgrading from 0.1.1
 
-Version 0.2.0 includes compiler corrections that can change generated source and rendered output. Rebuild generated components and check your templates before upgrading.
+Version 1.0.0 includes compiler corrections that can change generated source and rendered output. Rebuild generated components and check your templates before upgrading.
 
 - Public entry points, legacy deep imports, the `reserverWhitespace` spelling, JSX entity decoding, and the custom factory argument contract remain available.
 - In JavaScript output, text placeholders are separate React children. React elements are no longer coerced into strings, and adjacent numbers render independently. In attributes, `{a}{b}` concatenates values instead of numerically adding them.
@@ -157,7 +157,7 @@ CI checks Node.js 22/24, React 18/19, coverage, the library build, and the packa
 
 ## Maintenance
 
-The API remains experimental. Maintenance focuses on compiler correctness, compatibility, dependencies, and build reproducibility. Please report unsupported real-world templates with an input example and the expected component output.
+The supported template syntax and compiler options are documented above. Maintenance focuses on compiler correctness, compatibility, dependencies, and build reproducibility. Please report unsupported real-world templates with an input example and the expected component output.
 
 ## License
 
