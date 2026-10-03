@@ -23,7 +23,7 @@ export function getIndentContent(pretty: boolean, indent: number, content: strin
 }
 
 export function isValidVariableName(name: string) {
-  return /^[$_a-z][\da-z$_]*$/i.test(name);
+  return /^[$_\p{ID_Start}][$\u200C\u200D\p{ID_Continue}]*$/u.test(name);
 }
 
 /**

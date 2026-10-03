@@ -17,6 +17,10 @@ try {
   execFileSync('pnpm', ['install', '--ignore-scripts'], { cwd: consumer, stdio: 'pipe' });
   const require = createRequire(join(consumer, 'package.json'));
   const cjs = require('template-to-react');
+  assert.equal(require('template-to-react/package.json').name, 'template-to-react');
+  assert.equal(require('template-to-react/dist/index.umd.cjs').compileTemplateToReact, cjs.compileTemplateToReact);
+  const deepEsm = await import(pathToFileURL(join(consumer, 'node_modules/template-to-react/dist/index.js')));
+  assert.equal(typeof deepEsm.compileTemplateToReact, 'function');
   const esm = await import(pathToFileURL(join(consumer, 'node_modules/template-to-react/dist/index.js')));
   for (const { compileTemplateToReact, parser } of [esm, cjs]) {
     assert.equal(typeof parser.parse, 'function');
@@ -24,7 +28,7 @@ try {
     assert.match(compileTemplateToReact('<input/>', { jsx: true }), /jsxs\("input",null\)/);
   }
   // Exercise the actual ESM package export in the isolated consumer.
-  execFileSync(process.execPath, ['--input-type=module', '-e', "import { compileTemplateToReact } from 'template-to-react'; if (typeof compileTemplateToReact !== 'function') process.exit(1)"], { cwd: consumer });
+  execFileSync(process.execPath, ['--input-type=module', '-e', "import { compileTemplateToReact } from 'template-to-react'; import { compileTemplateToReact as deep } from 'template-to-react/dist/index.js'; if (compileTemplateToReact !== deep) process.exit(1)"], { cwd: consumer });
   const typeFiles = ['consumer.mts', 'consumer.cts'].map(name => {
     const path = join(consumer, name);
     writeFileSync(path, "import { compileTemplateToReact, type IJsxOptions } from 'template-to-react'; const jsx: IJsxOptions = true; const code: string = compileTemplateToReact('<div/>', { jsx });");

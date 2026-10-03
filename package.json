@@ -1,18 +1,22 @@
 {
   "name": "template-to-react",
-  "description": "compile html string template to react component",
+  "description": "Compile HTML templates with prop placeholders into React JSX or JavaScript source at build time",
   "author": {
     "name": "Saiya",
     "url": "https://evecalm.com/"
   },
   "keywords": [
     "react",
-    "template",
+    "jsx",
     "html",
-    "string",
-    "transpiler",
+    "html-to-react",
+    "html-to-jsx",
+    "html-template",
+    "template",
     "compiler",
-    "converter"
+    "code-generation",
+    "build-time",
+    "react-component"
   ],
   "files": [
     "dist"
@@ -21,7 +25,7 @@
     "type": "git",
     "url": "https://github.com/oe/template-to-react"
   },
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "main": "dist/index.umd.cjs",
   "module": "dist/index.js",
@@ -45,7 +49,7 @@
     "@vitest/coverage-v8": "5.0.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "typescript": "~6.0.3",
+    "typescript": "~5.9.3",
     "vite": "^8.3.2",
     "vitest": "5.0.3",
     "unplugin-dts": "^1.1.2",
@@ -66,6 +70,11 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.umd.cjs"
       }
-    }
+    },
+    "./*": "./*"
+  },
+  "homepage": "https://github.com/oe/template-to-react#readme",
+  "bugs": {
+    "url": "https://github.com/oe/template-to-react/issues"
   }
 }

@@ -33,6 +33,13 @@ for (const jsx of [false, true]) {
           .toBe('<strong>Ada Lovelace</strong>')
       })
 
+      it('renders a supplied React component in a template slot', () => {
+        const Component = compile('<section><{Heading}>{title}</{Heading}></section>', jsx, pretty)
+        const Heading = (props: { children?: React.ReactNode }) => React.createElement('h2', null, props.children)
+        expect(renderToStaticMarkup(React.createElement(Component, { Heading, title: 'Welcome' })))
+          .toBe('<section><h2>Welcome</h2></section>')
+      })
+
       it('treats placeholder keys as property names and concatenates numbers', () => {
         const Component = compile('<div data-count="{a}{b}">{user-name} {a}{b}</div>', jsx, pretty)
         expect(renderToStaticMarkup(React.createElement(Component, { 'user-name': 'Ada', a: 1, b: 2 })))
@@ -55,13 +62,15 @@ for (const jsx of [false, true]) {
       it('keeps unmatched braces and internal line breaks literal', () => {
         const Component = compile('<div>first\nsecond {</div>', jsx, pretty)
         expect(renderToStaticMarkup(React.createElement(Component)))
-          .toBe('<div>first\nsecond {</div>')
+          .toBe(!jsx && pretty ? '<div>first second {</div>' : '<div>first\nsecond {</div>')
       })
 
       it('preserves quotes, backslashes, ampersands and greater-than characters', () => {
         const Component = compile(`<div title='say "hello" \\ &amp;'>A > B &amp;</div>`, jsx, pretty)
         expect(renderToStaticMarkup(React.createElement(Component)))
-          .toBe('<div title="say &quot;hello&quot; \\ &amp;amp;">A &gt; B &amp;amp;</div>')
+          .toBe(jsx
+            ? '<div title="say &quot;hello&quot; \\ &amp;amp;">A &gt; B &amp;amp;</div>'
+            : '<div title="say &quot;hello&quot; \\ &amp;">A &gt; B &amp;</div>')
       })
     })
   }

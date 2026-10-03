@@ -58,8 +58,8 @@ function convertNode(node: INode, reserverWhitespace?: boolean): INode | undefin
  */
 export interface ITemplateToReactOptions {
   /**
-   * whether reserve leading and trailing whitespace in text node
-   *  invalid when pretty is true and jsx is true
+   * whether preserve leading and trailing whitespace in text nodes
+   * ignored when pretty printing is enabled; the whole template is always trimmed
    */
   reserverWhitespace?: boolean;
   /**

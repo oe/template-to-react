@@ -51,7 +51,7 @@ const htmlSyntax = `
     = attributes:attribute* { return attributes; }
 
   attribute
-    = space+ name:dashIdentifier space* "=" space* value:quotedValue
+    = space* name:dashIdentifier space* "=" space* value:quotedValue
       { return { name, value }; }
 
   quotedValue

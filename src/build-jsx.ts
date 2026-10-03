@@ -38,26 +38,31 @@ function getAttributes(attributes: IAttribute[], pretty: boolean, indent: number
 }
 
 
-function getElement(node: IElement | ISelfClosingElement, pretty: boolean, indent: number, indentSize: number, isRoot: boolean) {
+type FactoryModes = { root: boolean; nested: boolean };
+
+function getElement(node: IElement | ISelfClosingElement, pretty: boolean, indent: number, indentSize: number, isRoot: boolean, factories: FactoryModes) {
   const fn = isRoot ? 'jsxs' : 'jsx'
   const space = pretty ? ' ' : ''
-  const children = node.type === 'tag' ? `,${space}${getChildren(node.children, pretty, indent + indentSize, indentSize)}` : ''
+  const isCustomFactory = isRoot ? factories.root : factories.nested;
+  const children = node.type === 'tag'
+    ? `,${space}${isCustomFactory ? '' : '...'}${getChildren(node.children, pretty, indent + indentSize, indentSize, factories)}`
+    : isCustomFactory ? `,${space}[]` : '';
   const attrString = getAttributes(node.attributes, pretty, indent + indentSize, indentSize)
   return `${fn}(${getTagName(node)},${space}${attrString}${children})`
 }
 
-function getChildren(nodes: INode[], pretty: boolean, indent: number, indentSize: number) {
+function getChildren(nodes: INode[], pretty: boolean, indent: number, indentSize: number, factories: FactoryModes) {
   // Keep text placeholders as separate React children, including element props.
   const items = nodes.flatMap(node => {
-    if (node.type !== 'text') return [buildJsxFromInner(node, pretty, indent, indentSize)];
+    if (node.type !== 'text') return [buildJsxFromInner(node, pretty, indent, indentSize, false, factories)];
     return node.value.split(/({[^{}\r\n]+})/g).filter(part => part !== '').map(value =>
-      buildJsxFromInner({ type: 'text', value }, pretty, indent, indentSize));
+      buildJsxFromInner({ type: 'text', value }, pretty, indent, indentSize, false, factories));
   })
   if (!pretty) return `[${items.join(',')}]`
   return `[\n${getIndent(indent)}${items.join(`,\n${getIndent(indent)}`)}\n${getIndent(indent - indentSize)}]`
 }
 
-function buildJsxFromInner(node: INode, pretty: boolean, indent: number, indentSize: number, isRoot = false): string {
+function buildJsxFromInner(node: INode, pretty: boolean, indent: number, indentSize: number, isRoot = false, factories: FactoryModes = { root: false, nested: false }): string {
   switch (node.type) {
     case 'comment':
       return '';
@@ -65,13 +70,18 @@ function buildJsxFromInner(node: INode, pretty: boolean, indent: number, indentS
       return getTextNode(node, pretty, isRoot)
     case 'tag':
     case 'selfClosingTag':
-      return getElement(node, pretty, indent, indentSize, isRoot);
+      return getElement(node, pretty, indent, indentSize, isRoot, factories);
     default:
       return '';
   }
 }
 export function buildJsxFrom(node: INode, jsx: IJsxOptions, pretty: boolean, indent: number, indentSize: number) {
-  const code = buildJsxFromInner(node, pretty, indent, indentSize, true)
+  const options = typeof jsx === 'object' ? jsx : undefined;
+  const factories = {
+    root: !!options?.jsxs && options.jsxs !== 'React.createElement',
+    nested: !!options?.jsx && options.jsx !== 'React.createElement',
+  };
+  const code = buildJsxFromInner(node, pretty, indent, indentSize, true, factories)
   const injectedCode = generateJsxStatement(jsx, pretty, indent)
   return {
     code,
