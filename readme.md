@@ -25,7 +25,7 @@ This is a small, experimental utility maintained on a best-effort basis. Mainten
 ```sh
 npm install --save-dev template-to-react
 # or
-yarn add --dev template-to-react
+pnpm add --save-dev template-to-react
 ```
 
 The package exports ESM and CommonJS entry points and TypeScript declarations. React is used by the generated component and is supplied by your application. Rendering tests cover React 18 and 19.
@@ -103,18 +103,21 @@ The object form of `jsx` inserts the supplied JavaScript references for a fragme
 
 ## Development
 
-Use Node.js 22.12+ (22 or 24 LTS) and Yarn 1.22.22.
+Use Node.js 22.12+ (22 or 24 LTS) and pnpm 12.8.1.
 
 ```sh
-npm install --global yarn@1.22.22
-yarn install --frozen-lockfile
-yarn test:coverage
-yarn build
-yarn test:package
-yarn dev
+npm install --global pnpm@12.8.1
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm test:coverage
+pnpm build
+pnpm test:package
+pnpm dev
 ```
 
-`yarn test` runs once; `yarn test:watch` enables watch mode. The package smoke check installs a real tarball into an isolated temporary consumer, then verifies ESM/CommonJS loading and TypeScript declarations. It requires access to the npm registry. `prepublishOnly` runs the same checks before publication.
+`pnpm test` runs once; `pnpm test:watch` enables watch mode. The package smoke check installs a real tarball into an isolated temporary consumer, then verifies ESM/CommonJS loading and TypeScript declarations. It requires access to the npm registry. `prepublishOnly` runs the same checks before publication.
+
+The toolchain uses TypeScript 6, Vite 8, and Vitest 5. TypeScript 6 retains the compiler APIs required by declaration generation and the rendering/package checks.
 
 CI checks Node.js 22/24, React 18/19, coverage, the library build, and the packaged entry points. Before contributing a compiler fix, add a regression test that renders the generated component where possible.
 

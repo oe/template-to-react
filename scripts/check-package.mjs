@@ -2,19 +2,19 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 
 const consumer = mkdtempSync(join(tmpdir(), 'template-to-react-package-'));
 try {
-  const [packed] = JSON.parse(execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', consumer], { encoding: 'utf8' }));
+  const packed = JSON.parse(execFileSync('pnpm', ['pack', '--json', '--pack-destination', consumer], { encoding: 'utf8' }));
   for (const path of ['dist/index.js', 'dist/index.umd.cjs', 'dist/index.d.ts', 'dist/index.d.cts', 'LICENSE', 'readme.md']) {
     assert(packed.files.some(file => file.path === path), `Package is missing ${path}`);
   }
-  writeFileSync(join(consumer, 'package.json'), JSON.stringify({ private: true, type: 'module' }));
-  execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', join(consumer, packed.filename)], { cwd: consumer, stdio: 'pipe' });
+  writeFileSync(join(consumer, 'package.json'), JSON.stringify({ private: true, type: 'module', dependencies: { 'template-to-react': `file:./${basename(packed.filename)}` } }));
+  execFileSync('pnpm', ['install', '--ignore-scripts'], { cwd: consumer, stdio: 'pipe' });
   const require = createRequire(join(consumer, 'package.json'));
   const cjs = require('template-to-react');
   const esm = await import(pathToFileURL(join(consumer, 'node_modules/template-to-react/dist/index.js')));

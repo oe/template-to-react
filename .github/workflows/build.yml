@@ -24,15 +24,15 @@ jobs:
             react: 19
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-          cache: yarn
-      - run: npm install --global yarn@1.22.22
-      - run: yarn install --frozen-lockfile
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Check React 18 compatibility
         if: matrix.react == 18
-        run: yarn add --dev --no-lockfile react@18.3.1 react-dom@18.3.1
-      - run: yarn test:coverage
-      - run: yarn build
-      - run: yarn test:package
+        run: pnpm add --save-dev --lockfile=false react@18.3.1 react-dom@18.3.1
+      - run: pnpm test:coverage
+      - run: pnpm build
+      - run: pnpm test:package
